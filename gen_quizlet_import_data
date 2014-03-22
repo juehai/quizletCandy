@@ -1,0 +1,99 @@
+#!/usr/bin/env python
+import sys
+import urllib, urllib2, json
+
+def json_encode(s):
+    return json.dumps(s, separators=(',', ':'))
+
+def json_decode(s):
+    return json.loads(s)
+
+def _urlencode(**kw):
+    args = dict()
+    for k, v in kw.items():
+        args[k] = v
+    return urllib.urlencode(args)
+
+def _submit(url, data=None, method='GET'):
+    opener = urllib2.build_opener(urllib2.HTTPHandler)
+    try:
+        request = urllib2.Request(url, data)
+        request.get_method = lambda: method
+        content = opener.open(request).read()
+    except urllib2.HTTPError as e:
+        content = e.read()
+    except urllib2.URLError as e:
+        print str(e)
+        sys.exit(2)
+    return content
+
+def prepareYouDao(word):
+    YOUDAO_API='http://fanyi.youdao.com/openapi.do'
+    API_ARGS = dict()
+    API_ARGS['keyfrom'] = key
+    API_ARGS['key'] = keyfrom
+    API_ARGS['type'] = 'data'
+    API_ARGS['doctype'] = 'json'
+    API_ARGS['version'] = '1.1'
+    API_ARGS['q'] = word
+    api = '%s?%s' % (YOUDAO_API, _urlencode(**API_ARGS))
+    return api
+
+def translate(word):
+    print '-->Translate word: %s' % word
+    api = prepareYouDao(word)
+    content = _submit(api)
+    content = json_decode(content)
+
+    if not content.has_key('basic'):
+        return content['translation']
+
+    explains = content['basic']['explains']
+    return explains
+
+def main():
+    try:
+        with open(word_list, 'r') as f:
+            words = f.readlines()
+            f.close()
+        words = map(lambda x: x.strip(), words)
+    except IOError as e:
+        raise Exception('Not found word list file.')
+        sys.exit(3)
+
+    trans_words = words[start:end]
+
+    fname = dict()
+    fname['start'] = start
+    fname['end'] = end
+    if start is None:
+        fname['start'] = 0
+    if end is None:
+        fname['end'] = len(trans_words)
+    export_fname = 'quizlet_%(start)s-%(end)s_list.txt' % fname
+
+    with open(export_fname, 'w+') as f:
+        for word in trans_words:
+            explains = translate(word)
+            line = word + u'\t' + u'\n'.join(explains) + ';'
+            f.write(line.encode('utf-8'))
+        f.close()
+    print 'DONE.'
+
+if __name__ == '__main__':
+    key = 'juehai'
+    keyfrom = '1149113386'
+    word_list = '1700.txt'
+    start, end = 0, 100
+
+    try:
+        main()
+    except Exception as e:
+        raise
+        print str(e)
+        sys.exit(1)
+
+    
+
+
+
