@@ -74,8 +74,10 @@ def main():
 
     with open(export_fname, 'w+') as f:
         for word in trans_words:
+            if not word: continue
             explains = translate(word)
             line = word + u'\t' + u'\n'.join(explains) + ';'
+            #line = word + u'\t\t' + u';'.join(explains) + u'\n'
             f.write(line.encode('utf-8'))
         f.close()
     print 'DONE.'
@@ -83,8 +85,10 @@ def main():
 if __name__ == '__main__':
     key = 'juehai'
     keyfrom = '1149113386'
+    #key = 'juehai1'
+    #keyfrom = '1262776549'
     word_list = '1700.txt'
-    start, end = 0, 100
+    start, end = None, None
 
     try:
         main()
@@ -92,8 +96,3 @@ if __name__ == '__main__':
         raise
         print str(e)
         sys.exit(1)
-
-    
-
-
-
